@@ -1,4 +1,4 @@
-﻿function click{
+function click{
 param($x, $y)
 
 # .NET Frameworkの宣言
@@ -22,23 +22,23 @@ $SendMouseClick::mouse_event(0x0002, 0, 0, 0, 0);
 $SendMouseClick::mouse_event(0x0004, 0, 0, 0, 0);
 }
 
+function CFSS{
 #スクリーンショット取得
 Add-Type -AssemblyName System.Windows.Forms
-click -x 235 -y 166
-[System.Windows.Forms.SendKeys]::SendWait("^+I")
-Start-Sleep -s 5
 [System.Windows.Forms.SendKeys]::SendWait("^+P")
 Start-Sleep -s 5
 [System.Windows.Forms.SendKeys]::SendWait("Capture full size screenshot")
 Start-Sleep -s 5
 [System.Windows.Forms.SendKeys]::SendWait("~")
 [System.Windows.Forms.SendKeys]::SendWait("~")
-Start-Sleep -s 5
-[System.Windows.Forms.SendKeys]::SendWait("{F12}")
 Start-Sleep -s 10
+}
+
+Add-Type -AssemblyName System.Drawing
+function ImageSeparate{
+param($ImageName, $LeftUpX, $LeftUpY, $RightDownX, $RightDownY)
 
 #画像分割
-Add-Type -AssemblyName System.Drawing
 $pwd = pwd
 $DownloadPath = "D:\ダウンロード\"
 cd $DownloadPath
@@ -46,10 +46,29 @@ $SrcImagePath  = $DownloadPath + (Get-ChildItem -Filter *.png | Sort-Object Last
 cd $pwd
 $SrcImage = [System.Drawing.Image]::FromFile($SrcImagePath)
 [void][Reflection.Assembly]::LoadWithPartialName("System.Drawing")
-$Rect = New-Object System.Drawing.Rectangle(165, 0, 1265, 1500)#生成したい画像の左上の座標と、そこからの大きさ
+$Rect = New-Object System.Drawing.Rectangle($LeftUpX, $LeftUpY, ($RightDownX - $LeftUpX), ($RightDownY - $LeftUpY))
 $DstImage = $SrcImage.Clone($Rect, $SrcImage.PixelFormat)
-$DstImage.Save($DownloadPath + "CPU.png")
+$DstImage.Save($DownloadPath + "${ImageName}.png")
 
 #リソースの解放
 $SrcImage.Dispose()
 $DstImage.Dispose()
+}
+
+click -x 2682 -y 184
+
+#開発者モード起動
+[System.Windows.Forms.SendKeys]::SendWait("^+I")
+Start-Sleep -s 5
+
+CFSS
+ImageSeparate -ImageName Temp1 -LeftUpX 0 -LeftUpY 0 -RightDownX 100 -RightDownY 200
+
+click -x 2682 -y 184
+[System.Windows.Forms.SendKeys]::SendWait("{Down} 5")
+
+CFSS
+ImageSeparate -ImageName Temp2 -LeftUpX 100 -LeftUpY 200 -RightDownX 200 -RightDownY 400
+
+#開発者モード終了
+[System.Windows.Forms.SendKeys]::SendWait("{F12}")
